@@ -173,7 +173,6 @@ function AdminPanel({ onAuthed }) {
 
   // create group
   const [groupName, setGroupName] = useState("");
-  const [slug, setSlug]         = useState("");
   const [groupPw, setGroupPw]   = useState("");
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
@@ -202,12 +201,14 @@ function AdminPanel({ onAuthed }) {
   useEffect(() => { if (section==="users" && pickedTenant) refreshUsers(); }, [section, pickedTenant]);
 
   const createGroup = async () => {
-    if (!adminPw || !groupName || !slug || !groupPw) return;
+    if (!adminPw || !groupName || !groupPw) return;
+    const slug = groupName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (!slug) { setError("Lifegroup name needs at least one letter or number"); return; }
     setLoading(true); setError(""); setMsg("");
     try {
       const t = await api.createTenant(groupName, slug, groupPw, adminPw);
-      setMsg(`Created "${t.name}" (slug: ${t.slug}). Share the join code with members.`);
-      setGroupName(""); setSlug(""); setGroupPw("");
+      setMsg(`Created "${t.name}". Share the join code with members.`);
+      setGroupName(""); setGroupPw("");
     } catch(e) { setError(e.message); }
     finally { setLoading(false); }
   };
@@ -246,10 +247,6 @@ function AdminPanel({ onAuthed }) {
             <input value={groupName} onChange={e=>setGroupName(e.target.value)}
               placeholder="SRC Friday Lifegroup" style={inp}/>
           </Field>
-          <Field label="Slug (internal id, members never see this)">
-            <input value={slug} onChange={e=>setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,"-"))}
-              placeholder="srclfg" style={inp}/>
-          </Field>
           <Field label="Join Code (share with members)" extraMb={error||msg ? 10 : 18}>
             <input type="password" value={groupPw} onChange={e=>setGroupPw(e.target.value)}
               placeholder="••••••••" style={inp}/>
@@ -257,7 +254,7 @@ function AdminPanel({ onAuthed }) {
           {error && <p style={errorText}>{error}</p>}
           {msg && <p style={{color:COLORS.green, fontSize:".83rem", marginBottom:14}}>{msg}</p>}
           <button className="btn-primary" style={{width:"100%", opacity:loading?.6:1}}
-            disabled={loading || !adminPw || !groupName || !slug || !groupPw}
+            disabled={loading || !adminPw || !groupName || !groupPw}
             onClick={createGroup}>
             {loading ? "Creating…" : "Create Lifegroup"}
           </button>

@@ -37,10 +37,10 @@ export function generateId() {
 // ── API client ──────────────────────────────────────────────────────────────
 const BASE = "/api";
 
-async function req(method, path, body) {
+async function req(method, path, body, extraHeaders) {
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(extraHeaders || {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json();
@@ -50,7 +50,8 @@ async function req(method, path, body) {
 
 export const api = {
   // Tenants
-  createTenant: (name, slug, password) => req("POST", "/tenants", { name, slug, password }),
+  createTenant: (name, slug, password, adminPassword) =>
+    req("POST", "/tenants", { name, slug, password }, { "x-admin-password": adminPassword }),
   authTenant:   (slug, password)       => req("POST", "/tenants/auth", { slug, password }),
 
   // Events

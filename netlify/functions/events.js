@@ -6,7 +6,7 @@ export const handler = async (event) => {
   const pool = getPool();
   const params = event.queryStringParameters || {};
   const tenantId = params.tenant_id;
-  const segments = event.path.replace(/\/\.netlify\/functions\/events\/?/, "").split("/").filter(Boolean);
+  const segments = (event.path || "").replace(/.*\/events\/?/, "").split("/").filter(Boolean);
   const id = segments[0];
 
   try {

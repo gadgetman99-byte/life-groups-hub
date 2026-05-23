@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { COLORS, api } from "./helpers.js";
 
+const isAdminMode = () => new URLSearchParams(window.location.search).get("admin") === "1";
+
 export default function LandingScreen({ onJoined }) {
+  const adminMode = isAdminMode();
   const [mode, setMode]       = useState("join"); // "join" | "create"
   const [slug, setSlug]       = useState("");
   const [password, setPassword] = useState("");
   const [name, setName]       = useState("");
   const [groupName, setGroupName] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
   const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -22,10 +26,10 @@ export default function LandingScreen({ onJoined }) {
   };
 
   const create = async () => {
-    if (!groupName || !slug || !password) return;
+    if (!groupName || !slug || !password || !adminPassword) return;
     setLoading(true); setError("");
     try {
-      const tenant = await api.createTenant(groupName, slug, password);
+      const tenant = await api.createTenant(groupName, slug, password, adminPassword);
       onJoined(tenant);
     } catch(e) {
       setError(e.message);
@@ -50,20 +54,22 @@ export default function LandingScreen({ onJoined }) {
           </p>
         </div>
 
-        {/* Mode toggle */}
-        <div style={{display:"flex", background:COLORS.surface, borderRadius:10, padding:4, marginBottom:24}}>
-          {["join","create"].map(m => (
-            <button key={m} onClick={()=>{setMode(m);setError("");}} style={{
-              flex:1, padding:"8px 0", borderRadius:8, border:"none",
-              background: mode===m ? COLORS.accentSoft : "transparent",
-              color: mode===m ? COLORS.accent : COLORS.muted,
-              cursor:"pointer", fontFamily:"inherit", fontSize:".9rem",
-              fontWeight: mode===m ? 600 : 400, transition:"all .12s",
-            }}>
-              {m==="join" ? "Join a Group" : "Create a Group"}
-            </button>
-          ))}
-        </div>
+        {/* Mode toggle — Create only visible in admin mode (?admin=1) */}
+        {adminMode && (
+          <div style={{display:"flex", background:COLORS.surface, borderRadius:10, padding:4, marginBottom:24}}>
+            {["join","create"].map(m => (
+              <button key={m} onClick={()=>{setMode(m);setError("");}} style={{
+                flex:1, padding:"8px 0", borderRadius:8, border:"none",
+                background: mode===m ? COLORS.accentSoft : "transparent",
+                color: mode===m ? COLORS.accent : COLORS.muted,
+                cursor:"pointer", fontFamily:"inherit", fontSize:".9rem",
+                fontWeight: mode===m ? 600 : 400, transition:"all .12s",
+              }}>
+                {m==="join" ? "Join a Group" : "Create a Group"}
+              </button>
+            ))}
+          </div>
+        )}
 
         {mode === "create" && (
           <div style={{marginBottom:14}}>
@@ -88,7 +94,7 @@ export default function LandingScreen({ onJoined }) {
           </p>}
         </div>
 
-        <div style={{marginBottom: error ? 10 : 24}}>
+        <div style={{marginBottom: mode==="create" ? 14 : (error ? 10 : 24)}}>
           <label style={{color:COLORS.muted, fontSize:".78rem", letterSpacing:".06em", textTransform:"uppercase", display:"block", marginBottom:6}}>
             {mode==="create" ? "Set Group Password" : "Group Password"}
           </label>
@@ -98,11 +104,23 @@ export default function LandingScreen({ onJoined }) {
             style={inp} />
         </div>
 
+        {mode==="create" && (
+          <div style={{marginBottom: error ? 10 : 24}}>
+            <label style={{color:COLORS.muted, fontSize:".78rem", letterSpacing:".06em", textTransform:"uppercase", display:"block", marginBottom:6}}>
+              Admin Password
+            </label>
+            <input type="password" value={adminPassword} onChange={e=>setAdminPassword(e.target.value)}
+              onKeyDown={e=>e.key==="Enter"&&create()}
+              placeholder="••••••••"
+              style={inp} />
+          </div>
+        )}
+
         {error && <p style={{color:COLORS.rose, fontSize:".83rem", marginBottom:14}}>{error}</p>}
 
         <button className="btn-primary"
           style={{width:"100%", opacity:loading?.6:1}}
-          disabled={loading || !slug || !password || (mode==="create"&&!groupName)}
+          disabled={loading || !slug || !password || (mode==="create"&&(!groupName||!adminPassword))}
           onClick={mode==="join"?join:create}>
           {loading ? "Please wait…" : mode==="join" ? "Enter Group →" : "Create Group →"}
         </button>

@@ -6,7 +6,7 @@ export const handler = async (event) => {
   const pool = getPool();
   const params = event.queryStringParameters || {};
   const tenantId = params.tenant_id;
-  const raw = event.path.replace(/\/\.netlify\/functions\/ideas\/?/, "");
+  const raw = (event.path || "").replace(/.*\/ideas\/?/, "");
   const segments = raw.split("/").filter(Boolean);
   const id = segments[0];
   const sub = segments[1]; // "vote" or "comments"

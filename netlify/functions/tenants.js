@@ -16,8 +16,10 @@ export const handler = async (event) => {
   console.log("tenants called:", event.httpMethod, rawPath, "sub:", sub, sub2);
 
   try {
-    // POST /api/tenants — create new group
+    // POST /api/tenants — create new group (admin only)
     if (event.httpMethod === "POST" && !sub) {
+      const adminPass = event.headers["x-admin-password"];
+      if (!adminPass || adminPass !== process.env.ADMIN_PASSWORD) return json(403, { error: "Admin password required" });
       const { name, slug, password } = body;
       if (!name || !slug || !password) return json(400, { error: "name, slug and password required" });
 

@@ -7,10 +7,20 @@
   node_bundler = "esbuild"
   external_node_modules = ["pg", "bcryptjs"]
 
-# Route API calls to functions
+# Tenants - catch both /api/tenants and /api/tenants/anything
+[[redirects]]
+  from = "/api/tenants"
+  to = "/.netlify/functions/tenants"
+  status = 200
+
 [[redirects]]
   from = "/api/tenants/*"
   to = "/.netlify/functions/tenants/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/events"
+  to = "/.netlify/functions/events"
   status = 200
 
 [[redirects]]
@@ -19,8 +29,18 @@
   status = 200
 
 [[redirects]]
+  from = "/api/ideas"
+  to = "/.netlify/functions/ideas"
+  status = 200
+
+[[redirects]]
   from = "/api/ideas/*"
   to = "/.netlify/functions/ideas/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/messages"
+  to = "/.netlify/functions/messages"
   status = 200
 
 [[redirects]]
@@ -29,11 +49,16 @@
   status = 200
 
 [[redirects]]
+  from = "/api/comms"
+  to = "/.netlify/functions/comms"
+  status = 200
+
+[[redirects]]
   from = "/api/comms/*"
   to = "/.netlify/functions/comms/:splat"
   status = 200
 
-# SPA fallback — all other routes serve index.html
+# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"

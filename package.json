@@ -1,7 +1,7 @@
 {
   "name": "life-groups-hub",
   "version": "1.0.0",
-  "description": "A community calendar and communication platform for life groups",
+  "description": "A multi-tenant community calendar and communication platform for life groups",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "pg": "^8.12.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

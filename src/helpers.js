@@ -20,93 +20,81 @@ export const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 export const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 export const EVENT_COLORS = ["#6c8eff","#4ade80","#fbbf24","#fb7185","#a78bfa","#34d399","#f97316"];
 
-export const STORAGE_KEYS = {
-  events:   "lg_events",
-  ideas:    "lg_ideas",
-  messages: "lg_messages",
-  comms:    "lg_comms",
-};
-
 export function formatTime(ts) {
   const d = new Date(ts);
   const now = new Date();
   const diff = now - d;
   if (diff < 60000) return "just now";
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`;
   return d.toLocaleDateString();
 }
 
 export function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 }
 
-// localStorage helpers
-export function lsGet(key, fallback = []) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
+// ── API client ──────────────────────────────────────────────────────────────
+const BASE = "/api";
+
+async function req(method, path, body) {
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Request failed");
+  return data;
 }
 
-export function lsSet(key, data) {
-  try {
-    localStorage.setItem(key, JSON.stringify(data));
-  } catch {}
-}
+export const api = {
+  // Tenants
+  createTenant: (name, slug, password) => req("POST", "/tenants", { name, slug, password }),
+  authTenant:   (slug, password)       => req("POST", "/tenants/auth", { slug, password }),
+
+  // Events
+  getEvents:    (tenant_id)            => req("GET", `/events?tenant_id=${tenant_id}`),
+  createEvent:  (body)                 => req("POST", "/events", body),
+  updateEvent:  (id, body)             => req("PUT", `/events/${id}`, body),
+  deleteEvent:  (id)                   => req("DELETE", `/events/${id}`),
+
+  // Ideas
+  getIdeas:     (tenant_id)            => req("GET", `/ideas?tenant_id=${tenant_id}`),
+  createIdea:   (body)                 => req("POST", "/ideas", body),
+  voteIdea:     (id, user_name)        => req("POST", `/ideas/${id}/vote`, { user_name }),
+  addComment:   (id, author, text)     => req("POST", `/ideas/${id}/comments`, { author, text }),
+
+  // Messages
+  getMessages:  (tenant_id, after)     => req("GET", `/messages?tenant_id=${tenant_id}${after ? `&after=${after}` : ""}`),
+  sendMessage:  (body)                 => req("POST", "/messages", body),
+
+  // Comms
+  getComms:     (tenant_id)            => req("GET", `/comms?tenant_id=${tenant_id}`),
+  createComm:   (body)                 => req("POST", "/comms", body),
+  reactComm:    (id, emoji, user_name) => req("POST", `/comms/${id}/react`, { emoji, user_name }),
+};
 
 export const fieldLabel = {
-  color: "#7b82a0",
-  fontSize: ".78rem",
-  letterSpacing: ".06em",
-  textTransform: "uppercase",
-  display: "block",
-  marginBottom: 6,
+  color: "#7b82a0", fontSize: ".78rem", letterSpacing: ".06em",
+  textTransform: "uppercase", display: "block", marginBottom: 6,
 };
-
 export const fieldInput = {
-  background: "#181c27",
-  border: "1px solid #2a3050",
-  borderRadius: 8,
-  color: "#e8eaf6",
-  fontSize: ".9rem",
-  padding: "9px 12px",
-  outline: "none",
-  fontFamily: "'Crimson Pro', Georgia, serif",
-  width: "100%",
+  background: "#181c27", border: "1px solid #2a3050", borderRadius: 8,
+  color: "#e8eaf6", fontSize: ".9rem", padding: "9px 12px", outline: "none",
+  fontFamily: "'Crimson Pro', Georgia, serif", width: "100%",
 };
-
 export const overlay = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,.72)",
-  backdropFilter: "blur(4px)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 100,
-  padding: 20,
+  position: "fixed", inset: 0, background: "rgba(0,0,0,.72)",
+  backdropFilter: "blur(4px)", display: "flex", alignItems: "center",
+  justifyContent: "center", zIndex: 100, padding: 20,
 };
-
 export const modalBox = {
-  background: "#1e2435",
-  border: "1px solid #2a3050",
-  borderRadius: 16,
-  padding: 28,
-  width: "100%",
-  maxWidth: 480,
-  boxShadow: "0 24px 64px rgba(0,0,0,.6)",
-  maxHeight: "90vh",
-  overflowY: "auto",
+  background: "#1e2435", border: "1px solid #2a3050", borderRadius: 16,
+  padding: 28, width: "100%", maxWidth: 480,
+  boxShadow: "0 24px 64px rgba(0,0,0,.6)", maxHeight: "90vh", overflowY: "auto",
 };
-
 export const closeBtn = {
-  background: "transparent",
-  border: "none",
-  color: "#7b82a0",
-  fontSize: "1rem",
-  cursor: "pointer",
-  padding: "2px 6px",
+  background: "transparent", border: "none", color: "#7b82a0",
+  fontSize: "1rem", cursor: "pointer", padding: "2px 6px",
 };

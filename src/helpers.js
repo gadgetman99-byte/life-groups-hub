@@ -52,13 +52,19 @@ export const api = {
   // Tenants
   createTenant: (name, slug, password, adminPassword) =>
     req("POST", "/tenants", { name, slug, password }, { "x-admin-password": adminPassword }),
-  authTenant:   (slug, password)       => req("POST", "/tenants/auth", { slug, password }),
+  listTenants:  ()                     => req("GET", "/tenants/list"),
+  adminListTenants: (adminPassword)    => req("GET", "/tenants", null, { "x-admin-password": adminPassword }),
+  deleteTenant: (id, adminPassword)    => req("DELETE", `/tenants/${id}`, null, { "x-admin-password": adminPassword }),
 
-  // Users (per-tenant accounts)
-  registerUser: (tenant_id, username, password, avatar_idx) =>
-    req("POST", "/users/register", { tenant_id, username, password, avatar_idx }),
-  loginUser:    (tenant_id, username, password) =>
-    req("POST", "/users/login", { tenant_id, username, password }),
+  // Users (per-tenant accounts; username uniqueness is per tenant)
+  registerUser: (tenant_id, tenant_password, username, password, avatar_idx) =>
+    req("POST", "/users/register", { tenant_id, tenant_password, username, password, avatar_idx }),
+  loginUser:    (username, password)   => req("POST", "/users/login", { username, password }),
+  deleteSelf:   (user_id, password)    => req("DELETE", `/users/${user_id}`, { password }),
+  adminListUsers: (tenant_id, adminPassword) =>
+    req("GET", `/users?tenant_id=${tenant_id}`, null, { "x-admin-password": adminPassword }),
+  adminDeleteUser: (user_id, adminPassword) =>
+    req("DELETE", `/users/${user_id}`, null, { "x-admin-password": adminPassword }),
 
   // Events
   getEvents:    (tenant_id)            => req("GET", `/events?tenant_id=${tenant_id}`),

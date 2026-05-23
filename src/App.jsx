@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { COLORS, AVATARS, AVATAR_BG, api } from "./helpers.js";
 import LandingScreen from "./LandingScreen.jsx";
-import LoginScreen   from "./LoginScreen.jsx";
 import CalendarTab   from "./CalendarTab.jsx";
 import IdeasTab      from "./IdeasTab.jsx";
 import ChatTab       from "./ChatTab.jsx";
@@ -14,8 +13,8 @@ const TABS = [
   { id:"comms",    label:"Communications", icon:"📢" },
 ];
 
-const TENANT_KEY = "lg_tenant"; // persisted in localStorage — group membership sticks
-const USER_KEY   = "lg_user";   // persisted in localStorage — user account sticks
+const TENANT_KEY = "lg_tenant"; // localStorage — persists across sessions
+const USER_KEY   = "lg_user";   // localStorage — stay logged in until Logout
 
 export default function App() {
   const [tenant, setTenant] = useState(() => {
@@ -31,7 +30,10 @@ export default function App() {
   const [messages, setMessages] = useState([]);
   const [comms,    setComms]    = useState([]);
   const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deletePw, setDeletePw] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const pollRef = useRef(null);
   const lastMsgId = useRef(null);
 
@@ -54,7 +56,6 @@ export default function App() {
     }
   }, [tenant]);
 
-  // Poll for new messages every 5s, everything else every 15s
   const pollMessages = useCallback(async () => {
     if (!tenant) return;
     try {
@@ -75,10 +76,7 @@ export default function App() {
     if (!tenant || !user) return;
     setLoading(true);
     loadAll().finally(() => setLoading(false));
-
-    // Poll messages every 5s
     const msgInterval = setInterval(pollMessages, 5000);
-    // Poll everything else every 15s
     const fullInterval = setInterval(loadAll, 15000);
     return () => {
       clearInterval(msgInterval);
@@ -86,32 +84,32 @@ export default function App() {
     };
   }, [tenant, user, loadAll, pollMessages]);
 
-  const handleTenantJoined = (t) => {
+  const handleAuthed = (t, u) => {
     localStorage.setItem(TENANT_KEY, JSON.stringify(t));
+    localStorage.setItem(USER_KEY,   JSON.stringify(u));
     setTenant(t);
-  };
-
-  const handleUserJoined = (u) => {
-    // u is { id, name, username, avatarIdx, tenantId } from /api/users/login or /register
-    localStorage.setItem(USER_KEY, JSON.stringify(u));
     setUser(u);
   };
 
-  const handleLeave = () => {
-    localStorage.removeItem(USER_KEY);
-    setUser(null);
-  };
-
-  const handleLeaveGroup = () => {
+  const handleLogout = () => {
     localStorage.removeItem(TENANT_KEY);
     localStorage.removeItem(USER_KEY);
     setTenant(null);
     setUser(null);
     setEvents([]); setIdeas([]); setMessages([]); setComms([]);
+    setMenuOpen(false);
   };
 
-  if (!tenant) return <LandingScreen onJoined={handleTenantJoined} />;
-  if (!user)   return <LoginScreen   onJoin={handleUserJoined} tenant={tenant} onLeaveGroup={handleLeaveGroup} />;
+  const handleDeleteAccount = async () => {
+    if (!deletePw) return;
+    setDeleteError("");
+    try {
+      await api.deleteSelf(user.id, deletePw);
+      handleLogout();
+    } catch(e) { setDeleteError(e.message); }
+  };
+
+  if (!tenant || !user) return <LandingScreen onAuthed={handleAuthed} />;
 
   return (
     <div style={{ background:COLORS.bg, minHeight:"100vh", color:COLORS.text }}>
@@ -126,9 +124,6 @@ export default function App() {
           <div>
             <div style={{color:COLORS.text, fontWeight:600, fontSize:".95rem", lineHeight:1.1}}>
               {tenant.name}
-            </div>
-            <div style={{color:COLORS.muted, fontSize:".68rem", letterSpacing:".04em"}}>
-              /{tenant.slug}
             </div>
           </div>
         </div>
@@ -151,18 +146,36 @@ export default function App() {
           ))}
         </div>
 
-        {/* User */}
-        <div style={{display:"flex", alignItems:"center", gap:6, flexShrink:0}}>
-          <div style={{
-            width:28, height:28, borderRadius:8, flexShrink:0,
-            display:"flex", alignItems:"center", justifyContent:"center",
-            background:AVATAR_BG[user.avatarIdx % AVATAR_BG.length], fontSize:"1rem",
-          }}>{AVATARS[user.avatarIdx]}</div>
-          <span style={{color:COLORS.muted, fontSize:".8rem", maxWidth:70, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
-            {user.name}
-          </span>
-          <button onClick={handleLeave} title="Switch user" style={smallBtn}>👤</button>
-          <button onClick={handleLeaveGroup} title="Leave group" style={smallBtn}>⇐</button>
+        {/* User + menu */}
+        <div style={{display:"flex", alignItems:"center", gap:6, flexShrink:0, position:"relative"}}>
+          <button onClick={()=>setMenuOpen(o=>!o)} style={{
+            display:"flex", alignItems:"center", gap:6, background:"transparent",
+            border:`1px solid ${COLORS.border}`, borderRadius:8, padding:"3px 8px",
+            cursor:"pointer", fontFamily:"inherit",
+          }}>
+            <div style={{
+              width:24, height:24, borderRadius:6,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              background:AVATAR_BG[user.avatarIdx % AVATAR_BG.length], fontSize:".9rem",
+            }}>{AVATARS[user.avatarIdx]}</div>
+            <span style={{color:COLORS.muted, fontSize:".8rem", maxWidth:80, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+              {user.name}
+            </span>
+            <span style={{color:COLORS.muted, fontSize:".7rem"}}>▾</span>
+          </button>
+          {menuOpen && (
+            <div style={{
+              position:"absolute", top:42, right:0, minWidth:180,
+              background:COLORS.card, border:`1px solid ${COLORS.border}`,
+              borderRadius:10, padding:6, zIndex:60,
+              boxShadow:"0 16px 36px rgba(0,0,0,.5)",
+            }}>
+              <button onClick={handleLogout} style={menuItem}>↩ Log out</button>
+              <button onClick={()=>{setDeleting(true); setMenuOpen(false);}} style={{...menuItem, color:COLORS.rose}}>
+                ✕ Delete my account
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -184,12 +197,56 @@ export default function App() {
         {tab==="chat"     && <ChatTab     messages={messages} setMessages={setMessages} user={user} tenant={tenant} />}
         {tab==="comms"    && <CommsTab    comms={comms}   setComms={setComms}   user={user} tenant={tenant} />}
       </div>
+
+      {/* Delete account modal */}
+      {deleting && (
+        <div style={overlay} onClick={()=>setDeleting(false)}>
+          <div style={modalBox} onClick={e=>e.stopPropagation()}>
+            <h3 style={{color:COLORS.text, marginBottom:10}}>Delete your account?</h3>
+            <p style={{color:COLORS.muted, fontSize:".88rem", marginBottom:14}}>
+              This removes your user from <strong>{tenant.name}</strong> permanently.
+              Your posts and comments will remain but be attributed to your past name.
+            </p>
+            <input type="password" value={deletePw} onChange={e=>setDeletePw(e.target.value)}
+              placeholder="Confirm your password" style={inp} />
+            {deleteError && <p style={{color:COLORS.rose, fontSize:".83rem", marginTop:10}}>{deleteError}</p>}
+            <div style={{display:"flex", gap:10, marginTop:18}}>
+              <button onClick={()=>{setDeleting(false); setDeletePw(""); setDeleteError("");}}
+                style={{flex:1, padding:"10px", background:"transparent", border:`1px solid ${COLORS.border}`,
+                  borderRadius:8, color:COLORS.text, cursor:"pointer", fontFamily:"inherit"}}>
+                Cancel
+              </button>
+              <button onClick={handleDeleteAccount} disabled={!deletePw}
+                style={{flex:1, padding:"10px", background:COLORS.rose, border:"none",
+                  borderRadius:8, color:"#fff", cursor:"pointer", fontFamily:"inherit",
+                  opacity: deletePw ? 1 : .5}}>
+                Delete account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-const smallBtn = {
-  background:"transparent", border:`1px solid #2a3050`,
-  borderRadius:6, color:"#7b82a0", padding:"3px 6px",
-  cursor:"pointer", fontSize:".75rem", fontFamily:"inherit",
+const menuItem = {
+  display:"block", width:"100%", textAlign:"left", padding:"7px 12px",
+  background:"transparent", border:"none", color:"#e8eaf6",
+  cursor:"pointer", fontFamily:"inherit", fontSize:".88rem", borderRadius:6,
+};
+const overlay = {
+  position:"fixed", inset:0, background:"rgba(0,0,0,.72)",
+  backdropFilter:"blur(4px)", display:"flex", alignItems:"center",
+  justifyContent:"center", zIndex:100, padding:20,
+};
+const modalBox = {
+  background:"#1e2435", border:"1px solid #2a3050", borderRadius:16,
+  padding:28, width:"100%", maxWidth:420,
+  boxShadow:"0 24px 64px rgba(0,0,0,.6)",
+};
+const inp = {
+  width:"100%", padding:"11px 14px", background:"#181c27",
+  border:"1px solid #2a3050", borderRadius:10, color:"#e8eaf6",
+  fontSize:"1rem", outline:"none", fontFamily:"inherit",
 };

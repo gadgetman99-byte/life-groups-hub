@@ -54,6 +54,14 @@ export const handler = async (event) => {
       return json(200, safe);
     }
 
+    // GET /api/tenants/list — public, returns id + name only (for Register dropdown)
+    if (event.httpMethod === "GET" && sub === "list") {
+      const result = await pool.query(
+        "SELECT id, name FROM tenants ORDER BY name ASC"
+      );
+      return json(200, result.rows);
+    }
+
     // GET /api/tenants/slug/:slug
     if (event.httpMethod === "GET" && sub === "slug" && sub2) {
       const result = await pool.query(

@@ -54,6 +54,12 @@ export const api = {
     req("POST", "/tenants", { name, slug, password }, { "x-admin-password": adminPassword }),
   authTenant:   (slug, password)       => req("POST", "/tenants/auth", { slug, password }),
 
+  // Users (per-tenant accounts)
+  registerUser: (tenant_id, username, password, avatar_idx) =>
+    req("POST", "/users/register", { tenant_id, username, password, avatar_idx }),
+  loginUser:    (tenant_id, username, password) =>
+    req("POST", "/users/login", { tenant_id, username, password }),
+
   // Events
   getEvents:    (tenant_id)            => req("GET", `/events?tenant_id=${tenant_id}`),
   createEvent:  (body)                 => req("POST", "/events", body),

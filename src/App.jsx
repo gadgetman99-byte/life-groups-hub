@@ -14,15 +14,15 @@ const TABS = [
   { id:"comms",    label:"Communications", icon:"📢" },
 ];
 
-const TENANT_KEY = "lg_tenant";
-const USER_KEY   = "lg_user";
+const TENANT_KEY = "lg_tenant"; // persisted in localStorage — group membership sticks
+const USER_KEY   = "lg_user";   // persisted in localStorage — user account sticks
 
 export default function App() {
   const [tenant, setTenant] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem(TENANT_KEY)) || null; } catch { return null; }
+    try { return JSON.parse(localStorage.getItem(TENANT_KEY)) || null; } catch { return null; }
   });
   const [user, setUser] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem(USER_KEY)) || null; } catch { return null; }
+    try { return JSON.parse(localStorage.getItem(USER_KEY)) || null; } catch { return null; }
   });
 
   const [tab,      setTab]      = useState("calendar");
@@ -87,31 +87,31 @@ export default function App() {
   }, [tenant, user, loadAll, pollMessages]);
 
   const handleTenantJoined = (t) => {
-    sessionStorage.setItem(TENANT_KEY, JSON.stringify(t));
+    localStorage.setItem(TENANT_KEY, JSON.stringify(t));
     setTenant(t);
   };
 
-  const handleUserJoined = (name, avatarIdx) => {
-    const u = { name, avatarIdx };
-    sessionStorage.setItem(USER_KEY, JSON.stringify(u));
+  const handleUserJoined = (u) => {
+    // u is { id, name, username, avatarIdx, tenantId } from /api/users/login or /register
+    localStorage.setItem(USER_KEY, JSON.stringify(u));
     setUser(u);
   };
 
   const handleLeave = () => {
-    sessionStorage.removeItem(USER_KEY);
+    localStorage.removeItem(USER_KEY);
     setUser(null);
   };
 
   const handleLeaveGroup = () => {
-    sessionStorage.removeItem(TENANT_KEY);
-    sessionStorage.removeItem(USER_KEY);
+    localStorage.removeItem(TENANT_KEY);
+    localStorage.removeItem(USER_KEY);
     setTenant(null);
     setUser(null);
     setEvents([]); setIdeas([]); setMessages([]); setComms([]);
   };
 
   if (!tenant) return <LandingScreen onJoined={handleTenantJoined} />;
-  if (!user)   return <LoginScreen   onJoin={handleUserJoined} tenant={tenant} />;
+  if (!user)   return <LoginScreen   onJoin={handleUserJoined} tenant={tenant} onLeaveGroup={handleLeaveGroup} />;
 
   return (
     <div style={{ background:COLORS.bg, minHeight:"100vh", color:COLORS.text }}>

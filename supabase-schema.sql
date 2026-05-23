@@ -12,6 +12,18 @@ CREATE TABLE IF NOT EXISTS tenants (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Users (per-tenant accounts; username unique within a tenant)
+CREATE TABLE IF NOT EXISTS users (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id     UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  username      TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  avatar_idx    INTEGER NOT NULL DEFAULT 0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, username)
+);
+CREATE INDEX IF NOT EXISTS users_tenant_idx ON users(tenant_id);
+
 -- Events
 CREATE TABLE IF NOT EXISTS events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

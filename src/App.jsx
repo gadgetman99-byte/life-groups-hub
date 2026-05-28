@@ -119,10 +119,10 @@ export default function App() {
         padding:"0 16px", display:"flex", alignItems:"center",
         height:56, gap:12, position:"sticky", top:0, zIndex:50,
       }}>
-        <div style={{display:"flex", alignItems:"center", gap:8, flexShrink:0}}>
+        <div style={{display:"flex", alignItems:"center", gap:8, flexShrink:0, minWidth:0}}>
           <span style={{fontSize:"1.2rem"}}>⛪</span>
-          <div>
-            <div style={{color:COLORS.text, fontWeight:600, fontSize:".95rem", lineHeight:1.1}}>
+          <div style={{minWidth:0}}>
+            <div style={{color:COLORS.text, fontWeight:600, fontSize:".95rem", lineHeight:1.1, maxWidth:140, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
               {tenant.name}
             </div>
           </div>

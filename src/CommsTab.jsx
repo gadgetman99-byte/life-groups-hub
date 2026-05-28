@@ -45,11 +45,11 @@ export default function CommsTab({ comms, setComms, user, tenant }) {
     <div style={{height:"calc(100vh - 88px)", overflowY:"auto"}}>
       <div style={{background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:12, padding:16, marginBottom:16}}>
         <h3 style={{color:COLORS.text, marginBottom:12, fontSize:".95rem", fontWeight:600}}>📬 Post a Message</h3>
-        <div style={{display:"flex", gap:10, marginBottom:10}}>
-          <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} style={{...fieldInput,width:160}}>
+        <div style={{display:"flex", gap:10, marginBottom:10, flexWrap:"wrap"}}>
+          <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} style={{...fieldInput,width:"auto", minWidth:140, flex:"0 1 160px"}}>
             {Object.entries(TYPES).map(([k,v])=><option key={k} value={k}>{v.icon} {v.label}</option>)}
           </select>
-          <input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Subject…" style={{...fieldInput,flex:1}}/>
+          <input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Subject…" style={{...fieldInput,flex:"1 1 200px"}}/>
         </div>
         <textarea value={form.body} onChange={e=>setForm({...form,body:e.target.value})} placeholder="Write your message…" rows={3} style={{...fieldInput,resize:"vertical",marginBottom:10}}/>
         <button className="btn-primary" onClick={post} disabled={!form.title.trim()||!form.body.trim()||saving} style={{padding:"8px 20px",fontSize:".88rem"}}>

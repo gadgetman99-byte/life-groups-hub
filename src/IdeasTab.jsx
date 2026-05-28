@@ -50,9 +50,9 @@ export default function IdeasTab({ ideas, setIdeas, user, tenant }) {
     <div style={{height:"calc(100vh - 88px)", overflowY:"auto"}}>
       <div style={{background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:12, padding:16, marginBottom:16}}>
         <h3 style={{color:COLORS.text, marginBottom:12, fontSize:".95rem", fontWeight:600}}>💡 Suggest an Idea</h3>
-        <div style={{display:"flex", gap:10, marginBottom:10}}>
-          <input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Idea title…" style={{...fieldInput,flex:1}}/>
-          <select value={form.category} onChange={e=>setForm({...form,category:e.target.value})} style={{...fieldInput,width:130}}>{CATS.map(c=><option key={c} value={c}>{c}</option>)}</select>
+        <div style={{display:"flex", gap:10, marginBottom:10, flexWrap:"wrap"}}>
+          <input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Idea title…" style={{...fieldInput,flex:"1 1 200px"}}/>
+          <select value={form.category} onChange={e=>setForm({...form,category:e.target.value})} style={{...fieldInput,width:"auto", minWidth:120, flex:"0 1 130px"}}>{CATS.map(c=><option key={c} value={c}>{c}</option>)}</select>
         </div>
         <textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} placeholder="Describe your idea…" rows={2} style={{...fieldInput,resize:"vertical",marginBottom:10}}/>
         <button className="btn-primary" onClick={addIdea} disabled={!form.title.trim()||saving} style={{padding:"8px 20px",fontSize:".88rem"}}>

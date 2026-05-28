@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { COLORS, DAYS, MONTHS, EVENT_COLORS, api, fieldLabel, fieldInput, overlay, modalBox, closeBtn } from "./helpers.js";
+import { COLORS, DAYS, MONTHS, EVENT_COLORS, api, fieldLabel, fieldInput, overlay, modalBox, closeBtn, useIsMobile } from "./helpers.js";
 
 const navBtn = { background:COLORS.surface, border:`1px solid ${COLORS.border}`, color:COLORS.text, width:34, height:34, borderRadius:8, cursor:"pointer", fontSize:"1.1rem" };
 const actionBtn = { background:"transparent", border:"1px solid", borderRadius:8, padding:"8px 0", cursor:"pointer", fontSize:".88rem", fontFamily:"'Crimson Pro',Georgia,serif", transition:"all .12s" };
 
 export default function CalendarTab({ events, setEvents, user, tenant }) {
+  const isMobile = useIsMobile();
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [modal,    setModal]    = useState(null);
@@ -60,7 +61,7 @@ export default function CalendarTab({ events, setEvents, user, tenant }) {
     .sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6);
 
   return (
-    <div style={{display:"flex", gap:16, height:"calc(100vh - 88px)", overflow:"hidden"}}>
+    <div style={{display:"flex", flexDirection: isMobile ? "column" : "row", gap:16, height: isMobile ? "auto" : "calc(100vh - 88px)", overflow: isMobile ? "visible" : "hidden"}}>
       <div style={{flex:1, display:"flex", flexDirection:"column", overflow:"hidden"}}>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
           <button style={navBtn} onClick={()=>setViewDate(new Date(year,month-1,1))}>‹</button>
@@ -77,7 +78,7 @@ export default function CalendarTab({ events, setEvents, user, tenant }) {
               <div key={i} onClick={()=>d&&openNew(d)} style={{
                 background:isToday(d)?COLORS.accentSoft:COLORS.surface,
                 border:isToday(d)?`1px solid ${COLORS.accent}`:`1px solid ${COLORS.border}`,
-                borderRadius:6, padding:"4px 4px 2px", cursor:d?"pointer":"default", minHeight:64,
+                borderRadius:6, padding:"4px 4px 2px", cursor:d?"pointer":"default", minHeight: isMobile ? 44 : 64,
               }}
               onMouseEnter={e=>{if(d)e.currentTarget.style.background=isToday(d)?COLORS.accentSoft:"#232840";}}
               onMouseLeave={e=>{if(d)e.currentTarget.style.background=isToday(d)?COLORS.accentSoft:COLORS.surface;}}>
@@ -98,8 +99,8 @@ export default function CalendarTab({ events, setEvents, user, tenant }) {
         </div>
       </div>
 
-      <div style={{width:220, display:"flex", flexDirection:"column", gap:12}}>
-        <div style={{background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:12, padding:14, flex:1, overflowY:"auto"}}>
+      <div style={{width: isMobile ? "100%" : 220, display:"flex", flexDirection:"column", gap:12}}>
+        <div style={{background:COLORS.card, border:`1px solid ${COLORS.border}`, borderRadius:12, padding:14, flex:1, overflowY:"auto", maxHeight: isMobile ? 240 : undefined}}>
           <h3 style={{color:COLORS.text, fontSize:".82rem", fontWeight:600, letterSpacing:".05em", textTransform:"uppercase", marginBottom:12}}>📅 Upcoming</h3>
           {upcoming.length===0&&<p style={{color:COLORS.muted, fontSize:".82rem"}}>No upcoming events</p>}
           {upcoming.map(ev=>(

@@ -1,3 +1,19 @@
+import { useEffect, useState } from "react";
+
+export function useIsMobile(maxWidth = 700) {
+  const query = `(max-width: ${maxWidth}px)`;
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(query).matches
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const onChange = (e) => setIsMobile(e.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [query]);
+  return isMobile;
+}
+
 export const COLORS = {
   bg: "#0f1117",
   surface: "#181c27",

@@ -182,6 +182,9 @@ function AdminPanel({ onAuthed }) {
   const [tenants, setTenants]   = useState([]);
   const [pickedTenant, setPickedTenant] = useState("");
   const [users, setUsers]       = useState([]);
+  const [resetPw, setResetPw]   = useState("");
+  const [resetMsg, setResetMsg] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   const refreshTenants = async () => {
     try {
@@ -199,6 +202,7 @@ function AdminPanel({ onAuthed }) {
 
   useEffect(() => { if (section==="users" && adminPw) refreshTenants(); }, [section, adminPw]);
   useEffect(() => { if (section==="users" && pickedTenant) refreshUsers(); }, [section, pickedTenant]);
+  useEffect(() => { setResetPw(""); setResetMsg(""); }, [pickedTenant]);
 
   const createGroup = async () => {
     if (!adminPw || !groupName || !groupPw) return;
@@ -219,6 +223,17 @@ function AdminPanel({ onAuthed }) {
       await api.adminDeleteUser(id, adminPw);
       setUsers(users.filter(u=>u.id!==id));
     } catch(e) { setError(e.message); }
+  };
+
+  const resetJoinCode = async () => {
+    if (!pickedTenant || resetPw.length < 4) return;
+    setResetting(true); setError(""); setResetMsg("");
+    try {
+      await api.adminResetTenantPw(pickedTenant, resetPw, adminPw);
+      setResetMsg("Join code updated. Share the new code with members.");
+      setResetPw("");
+    } catch(e) { setError(e.message); }
+    finally { setResetting(false); }
   };
 
   return (
@@ -273,6 +288,28 @@ function AdminPanel({ onAuthed }) {
                   {tenants.map(t=>(<option key={t.id} value={t.id}>{t.name}</option>))}
                 </select>
               </Field>
+              <div style={{
+                padding:12, marginBottom:14, border:`1px solid ${COLORS.border}`,
+                borderRadius:8, background:COLORS.surface,
+              }}>
+                <label style={{...labelStyle, marginBottom:6}}>Reset Join Code</label>
+                <div style={{display:"flex", gap:6, flexWrap:"wrap"}}>
+                  <input type="password" value={resetPw} onChange={e=>setResetPw(e.target.value)}
+                    placeholder="New join code (4+ chars)"
+                    style={{...inp, flex:"1 1 180px"}}/>
+                  <button onClick={resetJoinCode}
+                    disabled={resetting || !adminPw || resetPw.length < 4}
+                    style={{
+                      background:COLORS.accent, border:"none", color:"#fff",
+                      borderRadius:8, padding:"0 14px", cursor:"pointer",
+                      fontFamily:"inherit", fontSize:".85rem",
+                      opacity:(resetting || !adminPw || resetPw.length < 4) ? .5 : 1,
+                    }}>
+                    {resetting ? "Saving…" : "Reset"}
+                  </button>
+                </div>
+                {resetMsg && <p style={{color:COLORS.green, fontSize:".8rem", marginTop:8}}>{resetMsg}</p>}
+              </div>
               {users.length === 0 ? (
                 <p style={{color:COLORS.muted, fontSize:".88rem"}}>No users in this lifegroup.</p>
               ) : (

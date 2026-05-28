@@ -82,6 +82,21 @@ export const handler = async (event) => {
       return json(200, result.rows);
     }
 
+    // PATCH /api/tenants/:id — admin: reset join code (password)
+    if (event.httpMethod === "PATCH" && sub) {
+      const adminPass = event.headers["x-admin-password"];
+      if (adminPass !== process.env.ADMIN_PASSWORD) return json(403, { error: "Forbidden" });
+      const { password } = body;
+      if (!password || password.length < 4) return json(400, { error: "password must be at least 4 characters" });
+      const hash = await bcrypt.hash(password, 10);
+      const result = await pool.query(
+        "UPDATE tenants SET password_hash=$1 WHERE id=$2 RETURNING id, name, slug, created_at",
+        [hash, sub]
+      );
+      if (result.rows.length === 0) return json(404, { error: "Group not found" });
+      return json(200, result.rows[0]);
+    }
+
     // DELETE /api/tenants/:id — admin
     if (event.httpMethod === "DELETE" && sub) {
       const adminPass = event.headers["x-admin-password"];

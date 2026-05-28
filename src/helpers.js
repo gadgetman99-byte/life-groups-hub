@@ -71,6 +71,8 @@ export const api = {
   listTenants:  ()                     => req("GET", "/tenants/list"),
   adminListTenants: (adminPassword)    => req("GET", "/tenants", null, { "x-admin-password": adminPassword }),
   deleteTenant: (id, adminPassword)    => req("DELETE", `/tenants/${id}`, null, { "x-admin-password": adminPassword }),
+  adminResetTenantPw: (id, password, adminPassword) =>
+    req("PATCH", `/tenants/${id}`, { password }, { "x-admin-password": adminPassword }),
 
   // Users (per-tenant accounts; username uniqueness is per tenant)
   registerUser: (tenant_id, tenant_password, username, password, avatar_idx) =>
